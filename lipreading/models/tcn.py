@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.nn.utils import weight_norm
 import pdb
 
+from .layers import PHMConv1d
 
 """Implements Temporal Convolutional Network (TCN)
 
@@ -32,18 +33,23 @@ class ConvBatchChompRelu(nn.Module):
         if dwpw:
             self.conv = nn.Sequential(
                 # -- dw
-                nn.Conv1d( n_inputs, n_inputs, kernel_size, stride=stride,
+                #nn.Conv1d( n_inputs, n_inputs, kernel_size, stride=stride,
+                #           padding=padding, dilation=dilation, groups=n_inputs, bias=False),
+                PHMConv1d(4, n_inputs, n_inputs, kernel_size, stride=stride,
                            padding=padding, dilation=dilation, groups=n_inputs, bias=False),
                 nn.BatchNorm1d(n_inputs),
                 Chomp1d(padding, True),
                 nn.PReLU(num_parameters=n_inputs) if relu_type == 'prelu' else nn.ReLU(inplace=True),
                 # -- pw
-                nn.Conv1d( n_inputs, n_outputs, 1, 1, 0, bias=False),
+                #nn.Conv1d( n_inputs, n_outputs, 1, 1, 0, bias=False),
+                PHMConv1d(4, n_inputs, n_outputs, 1, 1, 0, bias=False),
                 nn.BatchNorm1d(n_outputs),
                 nn.PReLU(num_parameters=n_outputs) if relu_type == 'prelu' else nn.ReLU(inplace=True)
             )
         else:
-            self.conv = nn.Conv1d(n_inputs, n_outputs, kernel_size,
+            #self.conv = nn.Conv1d(n_inputs, n_outputs, kernel_size,
+            #                                   stride=stride, padding=padding, dilation=dilation)
+            self.conv = PHMConv1d(4, n_inputs, n_outputs, kernel_size,
                                                stride=stride, padding=padding, dilation=dilation)
             self.batchnorm = nn.BatchNorm1d(n_outputs)
             self.chomp = Chomp1d(padding,True)
@@ -84,8 +90,9 @@ class MultibranchTemporalBlock(nn.Module):
         self.dropout1 = nn.Dropout(dropout)
 
         # downsample?
-        self.downsample = nn.Conv1d(n_inputs, n_outputs, 1) if (n_inputs//self.num_kernels) != n_outputs else None
-        
+        #self.downsample = nn.Conv1d(n_inputs, n_outputs, 1) if (n_inputs//self.num_kernels) != n_outputs else None
+        self.downsample = PHMConv1d(4, n_inputs, n_outputs, 1) if (n_inputs//self.num_kernels) != n_outputs else None
+
         # final relu
         if relu_type == 'relu':
             self.relu_final = nn.ReLU()
@@ -156,31 +163,39 @@ class TemporalBlock(nn.Module):
             self.net = nn.Sequential(
                 # -- first conv set within block
                 # -- dw
-                nn.Conv1d( n_inputs, n_inputs, kernel_size, stride=stride,
+                #nn.Conv1d( n_inputs, n_inputs, kernel_size, stride=stride,
+                #           padding=padding, dilation=dilation, groups=n_inputs, bias=False),
+                PHMConv1d(4, n_inputs, n_inputs, kernel_size, stride=stride,
                            padding=padding, dilation=dilation, groups=n_inputs, bias=False),
                 nn.BatchNorm1d(n_inputs),
                 Chomp1d(padding, True),
                 nn.PReLU(num_parameters=n_inputs) if relu_type == 'prelu' else nn.ReLU(inplace=True),
                 # -- pw
-                nn.Conv1d( n_inputs, n_outputs, 1, 1, 0, bias=False),
+                #nn.Conv1d( n_inputs, n_outputs, 1, 1, 0, bias=False),
+                PHMConv1d(4, n_inputs, n_outputs, 1, 1, 0, bias=False),
                 nn.BatchNorm1d(n_outputs),
                 nn.PReLU(num_parameters=n_outputs) if relu_type == 'prelu' else nn.ReLU(inplace=True),
                 nn.Dropout(dropout),
                 # -- second conv set within block
                 # -- dw
-                nn.Conv1d( n_outputs, n_outputs, kernel_size, stride=stride,
+                #nn.Conv1d( n_outputs, n_outputs, kernel_size, stride=stride,
+                #           padding=padding, dilation=dilation, groups=n_outputs, bias=False),
+                PHMConv1d(4, n_outputs, n_outputs, kernel_size, stride=stride,
                            padding=padding, dilation=dilation, groups=n_outputs, bias=False),
                 nn.BatchNorm1d(n_outputs),
                 Chomp1d(padding, True),
                 nn.PReLU(num_parameters=n_outputs) if relu_type == 'prelu' else nn.ReLU(inplace=True),
                 # -- pw
-                nn.Conv1d( n_outputs, n_outputs, 1, 1, 0, bias=False),
+                #nn.Conv1d( n_outputs, n_outputs, 1, 1, 0, bias=False),
+                PHMConv1d(4, n_outputs, n_outputs, 1, 1, 0, bias=False),
                 nn.BatchNorm1d(n_outputs),
                 nn.PReLU(num_parameters=n_outputs) if relu_type == 'prelu' else nn.ReLU(inplace=True),
                 nn.Dropout(dropout),
             )
         else:
-            self.conv1 = nn.Conv1d(n_inputs, n_outputs, kernel_size,
+            #self.conv1 = nn.Conv1d(n_inputs, n_outputs, kernel_size,
+            #                       stride=stride, padding=padding, dilation=dilation)
+            self.conv1 = PHMConv1d(4, n_inputs, n_outputs, kernel_size,
                                    stride=stride, padding=padding, dilation=dilation)
             self.batchnorm1 = nn.BatchNorm1d(n_outputs)
             self.chomp1 = Chomp1d(padding,symm_chomp)  if not self.no_padding else None
@@ -190,7 +205,9 @@ class TemporalBlock(nn.Module):
                 self.relu1 = nn.PReLU(num_parameters=n_outputs)
             self.dropout1 = nn.Dropout(dropout)
             
-            self.conv2 = nn.Conv1d(n_outputs, n_outputs, kernel_size,
+            #self.conv2 = nn.Conv1d(n_outputs, n_outputs, kernel_size,
+            #                                   stride=stride, padding=padding, dilation=dilation)
+            self.conv2 = PHMConv1d(4, n_outputs, n_outputs, kernel_size,
                                                stride=stride, padding=padding, dilation=dilation)
             self.batchnorm2 = nn.BatchNorm1d(n_outputs)
             self.chomp2 = Chomp1d(padding,symm_chomp) if not self.no_padding else None
@@ -208,7 +225,8 @@ class TemporalBlock(nn.Module):
                 self.net = nn.Sequential(self.conv1, self.batchnorm1, self.chomp1, self.relu1, self.dropout1,
                                          self.conv2, self.batchnorm2, self.chomp2, self.relu2, self.dropout2)
 
-        self.downsample = nn.Conv1d(n_inputs, n_outputs, 1) if n_inputs != n_outputs else None
+        #self.downsample = nn.Conv1d(n_inputs, n_outputs, 1) if n_inputs != n_outputs else None
+        self.downsample = PHMConv1d(4, n_inputs, n_outputs, 1) if n_inputs != n_outputs else None
         if self.no_padding:
             self.downsample_chomp = Chomp1d(downsample_chomp_size,True)
         if relu_type == 'relu':

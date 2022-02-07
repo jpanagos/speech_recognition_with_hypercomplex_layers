@@ -7,6 +7,7 @@ from lipreading.models.resnet1D import ResNet1D, BasicBlock1D
 from lipreading.models.shufflenetv2 import ShuffleNetV2
 from lipreading.models.tcn import MultibranchTemporalConvNet, TemporalConvNet
 
+from lipreading.models.layers import PHMConv3d, PHMLinear
 
 # -- auxiliary functions
 def threeD_to_2D_tensor(x):
@@ -27,7 +28,8 @@ class MultiscaleMultibranchTCN(nn.Module):
         self.num_kernels = len( self.kernel_sizes )
 
         self.mb_ms_tcn = MultibranchTemporalConvNet(input_size, num_channels, tcn_options, dropout=dropout, relu_type=relu_type, dwpw=dwpw)
-        self.tcn_output = nn.Linear(num_channels[-1], num_classes)
+        #self.tcn_output = nn.Linear(num_channels[-1], num_classes)
+        self.tcn_output = PHMLinear(4, num_channels[-1], num_classes)
 
         self.consensus_func = _average_batch
 
@@ -47,7 +49,8 @@ class TCN(nn.Module):
     def __init__(self, input_size, num_channels, num_classes, tcn_options, dropout, relu_type, dwpw=False):
         super(TCN, self).__init__()
         self.tcn_trunk = TemporalConvNet(input_size, num_channels, dropout=dropout, tcn_options=tcn_options, relu_type=relu_type, dwpw=dwpw)
-        self.tcn_output = nn.Linear(num_channels[-1], num_classes)
+        #self.tcn_output = nn.Linear(num_channels[-1], num_classes)
+        self.tcn_output = PHMLinear(4, um_channels[-1], num_classes)
 
         self.consensus_func = _average_batch
 
@@ -87,7 +90,8 @@ class Lipreading(nn.Module):
 
             frontend_relu = nn.PReLU(num_parameters=self.frontend_nout) if relu_type == 'prelu' else nn.ReLU()
             self.frontend3D = nn.Sequential(
-                        nn.Conv3d(1, self.frontend_nout, kernel_size=(5, 7, 7), stride=(1, 2, 2), padding=(2, 3, 3), bias=False),
+                        #nn.Conv3d(1, self.frontend_nout, kernel_size=(5, 7, 7), stride=(1, 2, 2), padding=(2, 3, 3), bias=False),
+                        PHMConv3d(4, 1, self.frontend_nout, kernel_size=(5, 7, 7), stride=(1, 2, 2), padding=(2, 3, 3), bias=False),
                         nn.BatchNorm3d(self.frontend_nout),
                         frontend_relu,
                         nn.MaxPool3d( kernel_size=(1, 3, 3), stride=(1, 2, 2), padding=(0, 1, 1)))

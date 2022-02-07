@@ -3,23 +3,27 @@ import math
 import torch.nn as nn
 import pdb
 
-
+from .layers import PHMConv1d
 
 def conv3x3(in_planes, out_planes, stride=1):
-    return nn.Conv1d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=1, bias=False)
+    # return nn.Conv1d(in_planes, out_planes, kernel_size=3, stride=stride,
+    #                  padding=1, bias=False)
+    return PHMConv1d(4, in_planes, out_planes, kernel_size=3, stride=stride,
+                      padding=1, bias=False)
 
 
 def downsample_basic_block( inplanes, outplanes, stride ):
     return  nn.Sequential(
-                nn.Conv1d(inplanes, outplanes, kernel_size=1, stride=stride, bias=False),
+                # nn.Conv1d(inplanes, outplanes, kernel_size=1, stride=stride, bias=False),
+                PHMConv1d(4, inplanes, outplanes, kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm1d(outplanes),
             )
 
 def downsample_basic_block_v2( inplanes, outplanes, stride ):
     return  nn.Sequential(
                 nn.AvgPool1d(kernel_size=stride, stride=stride, ceil_mode=True, count_include_pad=False),
-                nn.Conv1d(inplanes, outplanes, kernel_size=1, stride=1, bias=False),
+                # nn.Conv1d(inplanes, outplanes, kernel_size=1, stride=1, bias=False),
+                PHMConv1d(4, inplanes, outplanes, kernel_size=1, stride=1, bias=False),
                 nn.BatchNorm1d(outplanes),
             )
 
@@ -77,8 +81,10 @@ class ResNet1D(nn.Module):
         self.relu_type = relu_type
         self.downsample_block = downsample_basic_block
 
-        self.conv1 = nn.Conv1d(1, self.inplanes, kernel_size=80, stride=4, padding=38,
-                               bias=False)
+        # self.conv1 = nn.Conv1d(1, self.inplanes, kernel_size=80, stride=4, padding=38,
+        #                        bias=False)
+        self.conv1 = PHMConv1d(4, 1, self.inplanes, kernel_size=80, stride=4, padding=38,
+                                bias=False)
         self.bn1 = nn.BatchNorm1d(self.inplanes)
         # type of ReLU is an input option
         if relu_type == 'relu':

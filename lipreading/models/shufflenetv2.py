@@ -8,9 +8,12 @@ import math
 
 import pdb
 
+from .layers import PHMConv2d
+
 def conv_bn(inp, oup, stride):
     return nn.Sequential(
-        nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+        #nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+        PHMConv2d(4, inp, oup, 3, stride, 1, bias=False),
         nn.BatchNorm2d(oup),
         nn.ReLU(inplace=True)
     )
@@ -18,7 +21,8 @@ def conv_bn(inp, oup, stride):
 
 def conv_1x1_bn(inp, oup):
     return nn.Sequential(
-        nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+        #nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+        PHMConv2d(4, inp, oup, 1, 1, 0, bias=False),
         nn.BatchNorm2d(oup),
         nn.ReLU(inplace=True)
     )
@@ -52,38 +56,46 @@ class InvertedResidual(nn.Module):
             #assert inp == oup_inc
             self.banch2 = nn.Sequential(
                 # pw
-                nn.Conv2d(oup_inc, oup_inc, 1, 1, 0, bias=False),
+                #nn.Conv2d(oup_inc, oup_inc, 1, 1, 0, bias=False),
+                PHMConv2d(4, oup_inc, oup_inc, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup_inc),
                 nn.ReLU(inplace=True),
                 # dw
-                nn.Conv2d(oup_inc, oup_inc, 3, stride, 1, groups=oup_inc, bias=False),
+                #nn.Conv2d(oup_inc, oup_inc, 3, stride, 1, groups=oup_inc, bias=False),
+                PHMConv2d(4, oup_inc, oup_inc, 3, stride, 1, groups=oup_inc, bias=False),
                 nn.BatchNorm2d(oup_inc),
                 # pw-linear
-                nn.Conv2d(oup_inc, oup_inc, 1, 1, 0, bias=False),
+                #nn.Conv2d(oup_inc, oup_inc, 1, 1, 0, bias=False),
+                PHMConv2d(4, oup_inc, oup_inc, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup_inc),
                 nn.ReLU(inplace=True),
             )                
         else:                  
             self.banch1 = nn.Sequential(
                 # dw
-                nn.Conv2d(inp, inp, 3, stride, 1, groups=inp, bias=False),
+                #nn.Conv2d(inp, inp, 3, stride, 1, groups=inp, bias=False),
+                PHMConv2d(4, inp, inp, 3, stride, 1, groups=inp, bias=False),
                 nn.BatchNorm2d(inp),
                 # pw-linear
-                nn.Conv2d(inp, oup_inc, 1, 1, 0, bias=False),
+                #nn.Conv2d(inp, oup_inc, 1, 1, 0, bias=False),
+                PHMConv2d(4, inp, oup_inc, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup_inc),
                 nn.ReLU(inplace=True),
             )        
     
             self.banch2 = nn.Sequential(
                 # pw
-                nn.Conv2d(inp, oup_inc, 1, 1, 0, bias=False),
+                #nn.Conv2d(inp, oup_inc, 1, 1, 0, bias=False),
+                PHMConv2d(4, inp, oup_inc, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup_inc),
                 nn.ReLU(inplace=True),
                 # dw
-                nn.Conv2d(oup_inc, oup_inc, 3, stride, 1, groups=oup_inc, bias=False),
+                #nn.Conv2d(oup_inc, oup_inc, 3, stride, 1, groups=oup_inc, bias=False),
+                PHMConv2d(4, oup_inc, oup_inc, 3, stride, 1, groups=oup_inc, bias=False),
                 nn.BatchNorm2d(oup_inc),
                 # pw-linear
-                nn.Conv2d(oup_inc, oup_inc, 1, 1, 0, bias=False),
+                #nn.Conv2d(oup_inc, oup_inc, 1, 1, 0, bias=False),
+                PHMConv2d(4, oup_inc, oup_inc, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup_inc),
                 nn.ReLU(inplace=True),
             )
@@ -152,7 +164,8 @@ class ShuffleNetV2(nn.Module):
         self.globalpool = nn.Sequential(nn.AvgPool2d(int(input_size/32)))              
         
         # building classifier
-        self.classifier = nn.Sequential(nn.Linear(self.stage_out_channels[-1], n_class))
+        #self.classifier = nn.Sequential(nn.Linear(self.stage_out_channels[-1], n_class))
+        self.classifier = nn.Sequential(nn.PHMLinear(self.stage_out_channels[-1], n_class))
 
     def forward(self, x):
         x = self.conv1(x)
