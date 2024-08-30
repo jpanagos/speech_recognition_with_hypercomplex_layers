@@ -50,7 +50,7 @@ class TCN(nn.Module):
         super(TCN, self).__init__()
         self.tcn_trunk = TemporalConvNet(input_size, num_channels, dropout=dropout, tcn_options=tcn_options, relu_type=relu_type, dwpw=dwpw)
         #self.tcn_output = nn.Linear(num_channels[-1], num_classes)
-        self.tcn_output = PHMLinear(4, um_channels[-1], num_classes)
+        self.tcn_output = PHMLinear(4, num_channels[-1], num_classes)
 
         self.consensus_func = _average_batch
 
@@ -90,8 +90,8 @@ class Lipreading(nn.Module):
 
             frontend_relu = nn.PReLU(num_parameters=self.frontend_nout) if relu_type == 'prelu' else nn.ReLU()
             self.frontend3D = nn.Sequential(
-                        #nn.Conv3d(1, self.frontend_nout, kernel_size=(5, 7, 7), stride=(1, 2, 2), padding=(2, 3, 3), bias=False),
-                        PHMConv3d(4, 1, self.frontend_nout, kernel_size=(5, 7, 7), stride=(1, 2, 2), padding=(2, 3, 3), bias=False),
+                        nn.Conv3d(1, self.frontend_nout, kernel_size=(5, 7, 7), stride=(1, 2, 2), padding=(2, 3, 3), bias=False),
+                        #PHMConv3d(4, 1, self.frontend_nout, kernel_size=(5, 7, 7), stride=(1, 2, 2), padding=(2, 3, 3), bias=False),
                         nn.BatchNorm3d(self.frontend_nout),
                         frontend_relu,
                         nn.MaxPool3d( kernel_size=(1, 3, 3), stride=(1, 2, 2), padding=(0, 1, 1)))

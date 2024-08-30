@@ -1,12 +1,10 @@
 import torch
 import math
 
-import numpy as np
 import torch.nn as nn
 from torch import Tensor
-from torch.nn import Module
+from torch.nn import Module, init
 from torch.nn.parameter import Parameter
-from torch.nn import init
 from torch.nn import functional as F
 
 import collections
@@ -44,6 +42,12 @@ class PHMLinear(nn.Module):
     out = res.reshape(siz0 + siz1)
     return out
 
+  def kronecker_product2(self):
+    H = torch.zeros((self.out_features, self.in_features))
+    for i in range(self.n):
+        H = H + torch.kron(self.A[i], self.F[i])
+    return H
+
   def forward(self, input: Tensor) -> Tensor:
     self.weight = torch.sum(self.kronecker_product1(self.A, self.S), dim=0)
     input = input.type(dtype=self.weight.type())
@@ -52,7 +56,7 @@ class PHMLinear(nn.Module):
   def extra_repr(self) -> str:
     return 'in_features={}, out_features={}, bias={}'.format(
       self.in_features, self.out_features, self.bias is not None)
-    
+
   def reset_parameters(self) -> None:
     init.kaiming_uniform_(self.A, a=math.sqrt(5))
     init.kaiming_uniform_(self.S, a=math.sqrt(5))
@@ -73,7 +77,7 @@ class PHMConv1d(Module):
     self.stride = stride
     self.padding = padding
     self.dilation = dilation
-  
+
     if bias:
       self.bias = nn.Parameter(torch.Tensor(out_features))
     else:
@@ -180,7 +184,7 @@ class PHMConv2d(Module):
   def extra_repr(self) -> str:
     return 'in_features={}, out_features={}, bias={}'.format(
       self.in_features, self.out_features, self.bias is not None)
-    
+
   def reset_parameters(self) -> None:
     init.kaiming_uniform_(self.A, a=math.sqrt(5))
     init.kaiming_uniform_(self.F, a=math.sqrt(5))
@@ -231,9 +235,9 @@ class PHMConv3d(Module):
     return out
 
   def kronecker_product2(self):
-    H = torch.zeros((self.out_features, self.in_features, self.kernel_size, self.kernel_size))
+    H = torch.zeros((self.out_features, self.in_features, self.kernel_size, self.kernel_size, self.kernel_size))
     for i in range(self.n):
-        kron_prod = torch.kron(self.A[i], self.F[i]).view(self.out_features, self.in_features, self.kernel_size, self.kernel_size)
+        kron_prod = torch.kron(self.A[i], self.F[i]).view(self.out_features, self.in_features, self.kernel_size, self.kernel_size, self.kernel_size)
         H = H + kron_prod
     return H
 
@@ -246,7 +250,7 @@ class PHMConv3d(Module):
   def extra_repr(self) -> str:
     return 'in_features={}, out_features={}, bias={}'.format(
       self.in_features, self.out_features, self.bias is not None)
-    
+
   def reset_parameters(self) -> None:
     init.kaiming_uniform_(self.A, a=math.sqrt(5))
     init.kaiming_uniform_(self.F, a=math.sqrt(5))
@@ -255,4 +259,3 @@ class PHMConv3d(Module):
       if fan_in != 0:
         bound = 1 / math.sqrt(fan_in)
         init.uniform_(self.bias, -bound, bound)
-

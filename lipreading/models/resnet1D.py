@@ -81,10 +81,10 @@ class ResNet1D(nn.Module):
         self.relu_type = relu_type
         self.downsample_block = downsample_basic_block
 
-        # self.conv1 = nn.Conv1d(1, self.inplanes, kernel_size=80, stride=4, padding=38,
-        #                        bias=False)
-        self.conv1 = PHMConv1d(4, 1, self.inplanes, kernel_size=80, stride=4, padding=38,
+        self.conv1 = nn.Conv1d(1, self.inplanes, kernel_size=80, stride=4, padding=38,
                                 bias=False)
+        #self.conv1 = PHMConv1d(4, 1, self.inplanes, kernel_size=80, stride=4, padding=38,
+        #                        bias=False)
         self.bn1 = nn.BatchNorm1d(self.inplanes)
         # type of ReLU is an input option
         if relu_type == 'relu':

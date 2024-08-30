@@ -104,6 +104,7 @@ class CheckpointSaver:
         checkpoint_fp = os.path.join(self.save_dir, self.checkpoint_fn)
 
         # keep track of best model
+        print("Checking: current best eval perf: {0}, new: {1}".format(self.current_best, current_perf))
         self.is_best = current_perf > self.current_best
         if self.is_best:
             self.current_best = current_perf
@@ -126,6 +127,8 @@ class CheckpointSaver:
         torch.save(save_dict, checkpoint_fp)
         print("Checkpoint saved at {}".format(checkpoint_fp))
         if self.is_best:
+            print("{} is best, saving ckpt.best...".format(current_perf))
+            print("at time {}\n".format(datetime.datetime.now().isoformat().split('.')[0]))
             shutil.copyfile(checkpoint_fp, best_fp)
         if self.save_best_step and self.is_best_for_stage:
             shutil.copyfile(checkpoint_fp, best_stage_fp)

@@ -96,7 +96,7 @@ def extract_feats(model):
     return model(torch.FloatTensor(data)[None, None, :, :, :].cuda(), lengths=[data.shape[0]])
 
 
-def evaluate(model, dset_loader, criterion):
+def evaluate(model, dset_loader, criterion, partition):
 
     model.eval()
 
@@ -112,7 +112,7 @@ def evaluate(model, dset_loader, criterion):
             loss = criterion(logits, labels.cuda())
             running_loss += loss.item() * input.size(0)
 
-    print('{} in total\tCR: {}'.format( len(dset_loader.dataset), running_corrects/len(dset_loader.dataset)))
+    print('[{}] {} in total\tCR: {}'.format(partition, len(dset_loader.dataset), running_corrects/len(dset_loader.dataset)))
     return running_corrects/len(dset_loader.dataset), running_loss/len(dset_loader.dataset)
 
 
@@ -239,7 +239,7 @@ def main():
 
     while epoch < args.epochs:
         model = train(model, dset_loaders['train'], criterion, epoch, optimizer, logger)
-        acc_avg_val, loss_avg_val = evaluate(model, dset_loaders['val'], criterion)
+        acc_avg_val, loss_avg_val = evaluate(model, dset_loaders['val'], criterion, 'val')
         logger.info('{} Epoch:\t{:2}\tLoss val: {:.4f}\tAcc val:{:.4f}, LR: {}'.format('val', epoch, loss_avg_val, acc_avg_val, showLR(optimizer)))
         # -- save checkpoint
         save_dict = {
@@ -254,8 +254,9 @@ def main():
     # -- evaluate best-performing epoch on test partition
     best_fp = os.path.join(ckpt_saver.save_dir, ckpt_saver.best_fn)
     _ = load_model(best_fp, model)
-    acc_avg_test, loss_avg_test = evaluate(model, dset_loaders['test'], criterion)
-    logger.info('Test time performance of best epoch: {} (loss: {})'.format(acc_avg_test, loss_avg_test))
+    print("Testing best evaluated model on test set:")
+    acc_avg_test, loss_avg_test = evaluate(model, dset_loaders['test'], criterion, 'test')
+    logger.info('Test time performance of best epoch: {} (loss: {})\n'.format(acc_avg_test, loss_avg_test))
 
 if __name__ == '__main__':
     main()
